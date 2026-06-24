@@ -199,19 +199,21 @@
     // Enrich each row with isoYearWeek label
     rows.forEach(r => { r._yw = isoYearWeek(r.day, r.week); });
 
-    // Country → Queues map
-    const countryQueues = {};
-    rows.forEach(r => {
-      if (!countryQueues[r.country]) countryQueues[r.country] = new Set();
-      countryQueues[r.country].add(r.queue_name);
-    });
+    // All unique queues and countries (excluding blank country rows)
+    const allQueues    = [...new Set(rows.map(r => r.queue_name))].sort();
+    const allCountries = [...new Set(rows.map(r => r.country).filter(c => c))].sort();
+
+    // Convert country code to the queue-name prefix it owns:
+    // BE-FR → "BE FR", BE-NL → "BE NL", FR → "FR", DE → "DE", etc.
+    function queuePrefix(country) {
+      return country.replace('-', ' ');
+    }
 
     // ── Populate filters ───────────────────────────────────────────────────────
     const countryEl = document.getElementById('countryFilter');
     const queueEl   = document.getElementById('queueFilter');
 
-    const countries = Object.keys(countryQueues).sort();
-    countries.forEach(c => {
+    allCountries.forEach(c => {
       const o = document.createElement('option');
       o.value = c; o.textContent = c;
       countryEl.appendChild(o);
@@ -220,9 +222,10 @@
     function refreshQueueOptions() {
       const country = countryEl.value;
       queueEl.innerHTML = '<option value="">All Queues</option>';
-      const queues = country
-        ? [...countryQueues[country]].sort()
-        : [...new Set(rows.map(r => r.queue_name))].sort();
+      const prefix = country ? queuePrefix(country) : null;
+      const queues = prefix
+        ? allQueues.filter(q => q.startsWith(prefix))
+        : allQueues;
       queues.forEach(q => {
         const o = document.createElement('option');
         o.value = q; o.textContent = q;
