@@ -312,7 +312,7 @@
 
     function avg(arr) {
       const valid = arr.filter(v => v !== null);
-      if (!valid.length) return '—';
+      if (!valid.length) return '\u2014';
       return (valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(2) + '%';
     }
 
